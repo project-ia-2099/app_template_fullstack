@@ -3,19 +3,16 @@ name: Golden Path CI/CD - Filtro TI, QA & Produccion (GCP)
 on:
   pull_request:
     branches: [ main ]
-    paths:
-      - 'backend/**'
-      - 'frontend/**'
   push:
     branches: [ main ]
-    paths:
-      - 'backend/**'
-      - 'frontend/**'
   workflow_dispatch:
 
 permissions:
   contents: read
-  id-token: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 env:
   REGION: us-central1
@@ -32,6 +29,13 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Escaneo de Secretos con Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Escaneo de Secretos Expuestos (Cero Exposición)
         run: |
@@ -81,8 +85,11 @@ jobs:
   deploy-qa:
     name: "Fase 3: Deploy Automático a QA (Cloud Run)"
     needs: [ti-gatekeeper-backend, ti-gatekeeper-frontend]
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     environment:
       name: qa
       url: ${{ steps.deploy-web-qa.outputs.url }}
@@ -102,11 +109,14 @@ jobs:
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
 
-      - name: Build and Push Backend Image
+      - name: Build and Push Immutable Backend & Frontend Images
         run: |
-          IMAGE="${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/${{ github.event.repository.name }}-api:${{ github.sha }}"
-          docker build -t "$IMAGE" ./backend
-          docker push "$IMAGE"
+          API_IMAGE="${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/${{ github.event.repository.name }}-api:${{ github.sha }}"
+          WEB_IMAGE="${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/${{ github.event.repository.name }}-web:${{ github.sha }}"
+          docker build -t "$API_IMAGE" ./backend
+          docker push "$API_IMAGE"
+          docker build -t "$WEB_IMAGE" ./frontend
+          docker push "$WEB_IMAGE"
 
       - name: Deploy Backend to Cloud Run QA
         id: deploy-api-qa
@@ -119,21 +129,14 @@ jobs:
           secrets: ConnectionStrings__DefaultConnection=db-connection-string-qa:latest,AllowedClientIps=allowed-client-ips:latest
           flags: --allow-unauthenticated --port=8080 --service-account=cloudrun-runtime-qa@${{ secrets.GCP_PROJECT_ID }}.iam.gserviceaccount.com --add-cloudsql-instances=${{ secrets.GCP_PROJECT_ID }}:${{ env.REGION }}:${{ env.CLOUDSQL_INSTANCE }}
 
-      - name: Build and Push Frontend Image (QA)
-        run: |
-          IMAGE="${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/${{ github.event.repository.name }}-web-qa:${{ github.sha }}"
-          docker build \
-            --build-arg VITE_API_URL="${{ steps.deploy-api-qa.outputs.url }}" \
-            -t "$IMAGE" ./frontend
-          docker push "$IMAGE"
-
       - name: Deploy Frontend to Cloud Run QA
         id: deploy-web-qa
         uses: google-github-actions/deploy-cloudrun@v2
         with:
           service: ${{ github.event.repository.name }}-web-qa
           region: ${{ env.REGION }}
-          image: ${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/${{ github.event.repository.name }}-web-qa:${{ github.sha }}
+          image: ${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/${{ github.event.repository.name }}-web:${{ github.sha }}
+          env_vars: API_URL=${{ steps.deploy-api-qa.outputs.url }}
           secrets: AllowedClientIps=allowed-client-ips:latest
           flags: --allow-unauthenticated --port=8080 --service-account=cloudrun-runtime-qa@${{ secrets.GCP_PROJECT_ID }}.iam.gserviceaccount.com
 
@@ -147,20 +150,23 @@ jobs:
       - name: Publicar Enlaces Oficiales de QA
         run: |
           echo "### Entorno QA Desplegado (Google Cloud Run)" >> $GITHUB_STEP_SUMMARY
-          echo "| Componente | Enlace Oficial QA | Base de Datos (Secret Manager) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Componente | Enlace Oficial QA | Imagen Inmutable (SHA) |" >> $GITHUB_STEP_SUMMARY
           echo "| :--- | :--- | :--- |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Frontend Web (QA)** | ${{ steps.deploy-web-qa.outputs.url }} | - |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Backend API (QA)** | ${{ steps.deploy-api-qa.outputs.url }} | \`db-connection-string-qa:latest\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Healthcheck API (QA)** | ${{ steps.deploy-api-qa.outputs.url }}/health | \`ConnectionStrings__DefaultConnection\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Frontend Web (QA)** | ${{ steps.deploy-web-qa.outputs.url }} | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Backend API (QA)** | ${{ steps.deploy-api-qa.outputs.url }} | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Healthcheck API (QA)** | ${{ steps.deploy-api-qa.outputs.url }}/health | \`db-connection-string-qa:latest\` |" >> $GITHUB_STEP_SUMMARY
 
   # =========================================================================
-  # FASE 4: PASE A PRODUCCIÓN (1 Clic del Admin TI 888Leonidas888)
+  # FASE 4: PASE A PRODUCCIÓN (Promoción Inmutable — 1 Clic Admin TI)
   # =========================================================================
   deploy-prod:
     name: "Fase 4: Pase a Producción (Aprobación TI)"
-    needs: [deploy-qa]
-    if: github.event_name == 'workflow_dispatch' && github.actor == '888Leonidas888'
+    needs: [ti-gatekeeper-backend, ti-gatekeeper-frontend]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && github.actor == '888Leonidas888'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     environment:
       name: production
       url: ${{ steps.deploy-web-prod.outputs.url }}
@@ -177,10 +183,7 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Configure Docker for Artifact Registry
-        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
-
-      - name: Deploy Backend to Cloud Run Production
+      - name: Deploy Backend to Cloud Run Production (Same QA Image)
         id: deploy-api-prod
         uses: google-github-actions/deploy-cloudrun@v2
         with:
@@ -191,21 +194,14 @@ jobs:
           secrets: ConnectionStrings__DefaultConnection=db-connection-string-prod:latest,AllowedClientIps=allowed-client-ips:latest
           flags: --allow-unauthenticated --port=8080 --service-account=cloudrun-runtime-prod@${{ secrets.GCP_PROJECT_ID }}.iam.gserviceaccount.com --add-cloudsql-instances=${{ secrets.GCP_PROJECT_ID }}:${{ env.REGION }}:${{ env.CLOUDSQL_INSTANCE }}
 
-      - name: Build and Push Frontend Image (Production)
-        run: |
-          IMAGE="${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/${{ github.event.repository.name }}-web-prod:${{ github.sha }}"
-          docker build \
-            --build-arg VITE_API_URL="${{ steps.deploy-api-prod.outputs.url }}" \
-            -t "$IMAGE" ./frontend
-          docker push "$IMAGE"
-
-      - name: Deploy Frontend to Cloud Run Production
+      - name: Deploy Frontend to Cloud Run Production (Same QA Image)
         id: deploy-web-prod
         uses: google-github-actions/deploy-cloudrun@v2
         with:
           service: ${{ github.event.repository.name }}-web-prod
           region: ${{ env.REGION }}
-          image: ${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/${{ github.event.repository.name }}-web-prod:${{ github.sha }}
+          image: ${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/${{ github.event.repository.name }}-web:${{ github.sha }}
+          env_vars: API_URL=${{ steps.deploy-api-prod.outputs.url }}
           secrets: AllowedClientIps=allowed-client-ips:latest
           flags: --allow-unauthenticated --port=8080 --service-account=cloudrun-runtime-prod@${{ secrets.GCP_PROJECT_ID }}.iam.gserviceaccount.com
 
@@ -219,8 +215,8 @@ jobs:
       - name: Publicar Enlaces Oficiales de Producción
         run: |
           echo "### Entorno Producción Desplegado (Google Cloud Run)" >> $GITHUB_STEP_SUMMARY
-          echo "| Componente | Enlace Oficial Producción | Base de Datos (Secret Manager) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Componente | Enlace Oficial Producción | Imagen Inmutable (SHA) |" >> $GITHUB_STEP_SUMMARY
           echo "| :--- | :--- | :--- |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Frontend Web (PROD)** | ${{ steps.deploy-web-prod.outputs.url }} | - |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Backend API (PROD)** | ${{ steps.deploy-api-prod.outputs.url }} | \`db-connection-string-prod:latest\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Healthcheck API (PROD)** | ${{ steps.deploy-api-prod.outputs.url }}/health | \`ConnectionStrings__DefaultConnection\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Frontend Web (PROD)** | ${{ steps.deploy-web-prod.outputs.url }} | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Backend API (PROD)** | ${{ steps.deploy-api-prod.outputs.url }} | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Healthcheck API (PROD)** | ${{ steps.deploy-api-prod.outputs.url }}/health | \`db-connection-string-prod:latest\` |" >> $GITHUB_STEP_SUMMARY

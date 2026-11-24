@@ -48,4 +48,5 @@
 - [x] **Tarea 14:** Inyectar automáticamente `Cors__AllowedOrigins__0` en los servicios Backend de Cloud Run (`deploy-qa` y `deploy-prod`) en `.github/workflows/ci-cd.yml` con la URL oficial del Frontend recién desplegado.
 - [x] **Tarea 15:** Inyectar `AllowedClientIps` (`allowed-client-ips:latest`) también en los servicios Frontend (`deploy-web-qa` y `deploy-web-prod`) y documentar el bloqueo por IP en Nginx dentro de `scaffold-clean-fullstack`.
 - [x] **Tarea 16:** Separar identidades WIF y Runtime por entorno (`deployer-qa` / `deployer-prod` y `cloudrun-runtime-qa` / `cloudrun-runtime-prod`) con condición OIDC por `environment` en GCP y `ci-cd.yml`.
+- [x] **Tarea 17:** Endurecer `ci-cd.yml` según revisión de Infra: Gitleaks, `id-token: write` por job, `concurrency`, eliminación de filtro `paths`, guard `main` en `workflow_dispatch` y promoción inmutable de imágenes QA $\rightarrow$ PROD con `API_URL` en runtime (`env-config.js`).
 

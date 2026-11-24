@@ -35,3 +35,5 @@ description: Reglas obligatorias de Golden Path para flujo Git, Conventional Com
 12. **Inglés Técnico en Código y CORS Restringido:**
     - Nombres de clases, interfaces, métodos, DTOs, variables y archivos de código deben escribirse en **inglés técnico** (los textos visibles de UI e informes pueden estar en español).
     - Prohibido `AllowAnyOrigin()` en `Program.cs`; configura orígenes permitidos explícitos (`Cors:AllowedOrigins` o dominio exacto del frontend).
+13. **Comunicación Coloquial con el Usuario (Cero Tecnicismos):**
+    - Al hablar o hacer preguntas al usuario final (Vicoder), **nunca menciones términos técnicos** (*MySQL, migraciones, backend, frontend, API, ramas, PR, Docker, Cloud Run, xUnit, Vitest, JSON*). Explica todo en lenguaje simple de negocio.

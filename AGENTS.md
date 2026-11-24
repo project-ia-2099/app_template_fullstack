@@ -58,3 +58,6 @@ Este repositorio se rige por las reglas obligatorias del **Golden Path Corporati
 7. **Estándar UI/UX Corporativo (Minimalista Pastel + Font Awesome Free):**
    - **Prohibido usar emoticones/emojis Unicode** en la interfaz (`frontend/src/`). Usa únicamente **Font Awesome Free** (`@fortawesome/fontawesome-free`).
    - Todas las aplicaciones deben usar el **Design System Minimalista Pastel** definido en `scaffold-clean-fullstack` (fondo neutro claro, tarjetas blancas con bordes sutiles, acentos pastel sobrios y tipografía limpia `Inter`) para mantener identidad corporativa uniforme.
+8. **Comunicación con el Usuario en Lenguaje Coloquial (Cero Tecnicismos):**
+   - En tus respuestas y preguntas al usuario **nunca menciones detalles técnicos** (prohibido decir: *MySQL, migraciones, backend, frontend, API, endpoints, Clean Architecture, ramas Git, Pull Request/PR, Docker, Cloud Run, WIF, CORS, Vitest, xUnit, JSON*).
+   - Traduce siempre a lenguaje cotidiano de negocio (ej. *"preparando el espacio para tus datos"*, *"construyendo tu aplicación y verificando que todo funcione bien"*, *"enviando tu aplicación al ambiente de pruebas en línea"*, *"¿este campo es obligatorio u opcional?"*).

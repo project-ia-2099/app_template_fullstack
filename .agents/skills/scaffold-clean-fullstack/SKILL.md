@@ -48,7 +48,7 @@ Crea la solución `backend/Books.sln` (o el nombre del dominio indicado en `MEMO
 
 ### Paso 2: Crear el Frontend en React + TypeScript (`frontend/`)
 1. Configura `package.json` (incluyendo `@fortawesome/fontawesome-free`), `tsconfig.json` (con `"types": ["vite/client", "vitest/globals", "@testing-library/jest-dom"]`) y `vite.config.ts`.
-2. Lee la URL del backend desde `import.meta.env.VITE_API_URL` (sin crear fallbacks silenciosos ni `catch {}` vacíos que oculten errores; tampoco envíes valores mágicos inventados como `-1` para campos vacíos — envía `null` o deja validar al Backend).
+2. Lee la URL del backend desde `window.__ENV__?.API_URL ?? import.meta.env.VITE_API_URL` (sin crear fallbacks silenciosos ni `catch {}` vacíos que oculten errores; tampoco envíes valores mágicos inventados como `-1` para campos vacíos — envía `null` o deja validar al Backend). En `index.html`, incluye `<script src="/env-config.js"></script>` antes de `main.tsx` para soportar inyección en tiempo de ejecución en Cloud Run.
 3. **Cero Lógica de Negocio en Frontend:** React únicamente renderiza datos y envía formularios hacia la API; toda validación de negocio o cálculo vive en el Backend (`Application` / `Domain`).
 4. **Identidad Visual Corporativa (Minimalista Pastel + Font Awesome Free):**
    - **Cero emoticones/emojis Unicode** en toda la interfaz; usa únicamente iconos de **Font Awesome Free** (`import '@fortawesome/fontawesome-free/css/all.min.css'` y `<i className="fa-solid fa-..." />`).
@@ -57,7 +57,9 @@ Crea la solución `backend/Books.sln` (o el nombre del dominio indicado en `MEMO
 
 ### Paso 3: Contenedores Docker (`Dockerfile` y `docker-compose.yml`)
 1. `backend/Dockerfile`: Multi-stage con `mcr.microsoft.com/dotnet/sdk:10.0` y `mcr.microsoft.com/dotnet/aspnet:10.0` en puerto `8080`.
-2. `frontend/Dockerfile` + `frontend/nginx.conf`: Multi-stage con `node:26-alpine` (recibiendo `ARG VITE_API_URL`) y `nginx:alpine` en puerto `8080`. Incluye un script `/docker-entrypoint.d/99-ip-allowlist.sh` que, si `AllowedClientIps` está definido en entorno, genera `/etc/nginx/conf.d/allowlist.inc` con `allow <IP>;` por cada IP y `deny all;` (usando `set_real_ip_from 0.0.0.0/0; real_ip_header X-Forwarded-For; real_ip_recursive on;`) para devolver `403` directo desde Nginx a IPs no autorizadas.
+2. `frontend/Dockerfile` + `frontend/nginx.conf`: Multi-stage con `node:26-alpine` y `nginx:alpine` en puerto `8080`. Incluye:
+   - `/docker-entrypoint.d/98-env-config.sh`: genera `/usr/share/nginx/html/env-config.js` con `window.__ENV__ = { API_URL: "${API_URL:-}" };` al arrancar el contenedor, permitiendo promover **la misma imagen inmutable** de QA a Producción sin recompilar.
+   - `/docker-entrypoint.d/99-ip-allowlist.sh`: si `AllowedClientIps` está definido en entorno, genera `/etc/nginx/conf.d/allowlist.inc` con `allow <IP>;` por cada IP y `deny all;` (usando `set_real_ip_from 0.0.0.0/0; real_ip_header X-Forwarded-For; real_ip_recursive on;`) para devolver `403` directo desde Nginx a IPs no autorizadas.
 3. `docker-compose.yml`: Servicios `mysql` (`mysql:8.0`), `books-api` y `books-web`.
 
 ### Paso 4: Verificación y Documentación

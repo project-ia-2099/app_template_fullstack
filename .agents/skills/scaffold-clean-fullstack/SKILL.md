@@ -50,9 +50,17 @@ Crea la solución `backend/Books.sln` (o el nombre del dominio indicado en `MEMO
 1. Configura `package.json` (incluyendo `@fortawesome/fontawesome-free`), `tsconfig.json` (con `"types": ["vite/client", "vitest/globals", "@testing-library/jest-dom"]`) y `vite.config.ts`.
 2. Lee la URL del backend desde `window.__ENV__?.API_URL ?? import.meta.env.VITE_API_URL` (sin crear fallbacks silenciosos ni `catch {}` vacíos que oculten errores; tampoco envíes valores mágicos inventados como `-1` para campos vacíos — envía `null` o deja validar al Backend). En `index.html`, incluye `<script src="/env-config.js"></script>` antes de `main.tsx` para soportar inyección en tiempo de ejecución en Cloud Run.
 3. **Cero Lógica de Negocio en Frontend:** React únicamente renderiza datos y envía formularios hacia la API; toda validación de negocio o cálculo vive en el Backend (`Application` / `Domain`).
-4. **Identidad Visual Corporativa (Minimalista Pastel + Font Awesome Free):**
+4. **Identidad Visual Corporativa (Combinación Pastel Armónica + Formato Fijo de Secciones + Font Awesome Free):**
    - **Cero emoticones/emojis Unicode** en toda la interfaz; usa únicamente iconos de **Font Awesome Free** (`import '@fortawesome/fontawesome-free/css/all.min.css'` y `<i className="fa-solid fa-..." />`).
-   - Aplica obligatoriamente los tokens CSS minimalistas pastel: fondo general `#F8FAFB`, tarjetas `#FFFFFF` con borde `#E5E7EB` (sin sombras pesadas ni gradientes), texto `#1F2937` / `#6B7280`, acento primario azul pizarra `#647D9B`, éxito verde salvia `#6B9080`, alerta ámbar pastel `#D4A373`, peligro rosa pastel `#C97A7E` y tipografía `Inter` / `system-ui`.
+   - **Combinación de colores pastel (prohibido diseño monocromático de un solo color):** Usa una tríada pastel equilibrada:
+     - Fondo general `#F7F9FC`, tarjetas `#FFFFFF` con borde `#E2E8F0` (`box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04)`).
+     - **Barra de títulos (Header):** Fondo pastel suave combinado (`linear-gradient(90deg, #EEF2FF 0%, #ECFDF5 100%)`) con borde inferior `#CBD5E1`, caja de icono en `#E0E7FF` (icono `#4F46E5`) y badge de área en menta pastel (`#D1FAE5`, texto `#065F46`).
+     - **Botón principal:** Azul pizarra pastel `#5B7C99` (`hover: #4A6984`); **acento secundario/bordes activos:** lavanda `#C7D2FE`.
+     - **Estados:** Éxito salvia `#D1FAE5`/`#065F46`, alerta ámbar pastel `#FEF3C7`/`#92400E`, peligro rosa pastel `#FFE4E6`/`#BE123C`.
+   - **Formato y tipografía estrictamente uniformes entre aplicaciones:**
+     - Contenedor principal centrado `max-width: 1120px`, fuente `Inter, system-ui, sans-serif`, texto `#1E293B` / `#64748B`.
+     - **Barra de títulos (Header):** `padding: 16px 24px`, caja de icono `40px × 40px` (`border-radius: 10px`), título **`h1` siempre `font-size: 1.375rem` (`22px`, `font-weight: 600`, `line-height: 1.25`)**, subtítulo **`0.875rem` (`14px`)**.
+     - **Tarjetas y secciones (`form-card`, `table-card`):** `border-radius: 12px`, `padding: 20px 24px`, títulos de sección **`h2` siempre `1rem` (`16px`, `font-weight: 600`)**, etiquetas de formulario `0.8125rem` (`13px`), inputs/botones `height: 38px`, `border-radius: 8px`, `font-size: 0.875rem`.
 5. Agrega pruebas unitarias en `src/App.test.tsx` con `Vitest` y `@testing-library/react`.
 
 ### Paso 3: Contenedores Docker (`Dockerfile` y `docker-compose.yml`)

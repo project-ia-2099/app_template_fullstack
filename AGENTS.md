@@ -55,9 +55,9 @@ Este repositorio se rige por las reglas obligatorias del **Golden Path Corporati
    - **Base de Datos MySQL por Área y Prefijo por App:** Cada área comparte una única BD por entorno (`local_<area>`, `qa_<area>`, `prod_<area>`), creada automáticamente al arrancar (`CREATE DATABASE IF NOT EXISTS`) si es relacional. Dentro de esa BD, cada app aísla sus tablas con prefijo `<nombre>_<tabla>` y su historial propio `MigrationsHistoryTable("__EFMigrationsHistory_<nombre>")` usando **Migraciones EF Core** (`Database.Migrate()`). **Prohibido usar `EnsureCreated()`.**
 6. **Lógica de Negocio 100% en Backend (Preparado para Microservicios):**
    - Toda regla de negocio, cálculo, validación crítica, estado o auditoría debe vivir exclusivamente en `backend/*.Domain` y `backend/*.Application`. El Frontend (`React`) solo renderiza vistas y envía peticiones a la API.
-7. **Estándar UI/UX Corporativo (Minimalista Pastel + Font Awesome Free):**
+7. **Estándar UI/UX Corporativo (Combinación Pastel + Formato Fijo + Font Awesome Free):**
    - **Prohibido usar emoticones/emojis Unicode** en la interfaz (`frontend/src/`). Usa únicamente **Font Awesome Free** (`@fortawesome/fontawesome-free`).
-   - Todas las aplicaciones deben usar el **Design System Minimalista Pastel** definido en `scaffold-clean-fullstack` (fondo neutro claro, tarjetas blancas con bordes sutiles, acentos pastel sobrios y tipografía limpia `Inter`) para mantener identidad corporativa uniforme.
+   - Todas las aplicaciones deben respetar la **combinación armónica de colores pastel** (evitando diseños monocromáticos) y el **formato fijo de barra de títulos y secciones** (`h1: 22px`, `h2: 16px`, `max-width: 1120px`) definidos en `scaffold-clean-fullstack`.
 8. **Comunicación con el Usuario en Lenguaje Coloquial (Cero Tecnicismos):**
    - En tus respuestas y preguntas al usuario **nunca menciones detalles técnicos** (prohibido decir: *MySQL, migraciones, backend, frontend, API, endpoints, Clean Architecture, ramas Git, Pull Request/PR, Docker, Cloud Run, WIF, CORS, Vitest, xUnit, JSON*).
    - Traduce siempre a lenguaje cotidiano de negocio (ej. *"preparando el espacio para tus datos"*, *"construyendo tu aplicación y verificando que todo funcione bien"*, *"enviando tu aplicación al ambiente de pruebas en línea"*, *"¿este campo es obligatorio u opcional?"*).

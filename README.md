@@ -44,5 +44,19 @@ Repositorio plantilla corporativo gobernado por TI para la creación de aplicaci
 12. **Convención de Nombres y Áreas Permitidas (`app-<area>-<nombre>`):** Lista cerrada de áreas (`contabilidad`, `rrhh`, `sistemas`, `comercial`, `almacen`); cualquier otra área requiere solicitud a TI. Formato en minúsculas (`kebab-case`, máx. 35 caracteres) para compatibilidad directa con Cloud Run.
 13. **Base de Datos MySQL por Área + Prefijo por Aplicación:** Cada área comparte una BD por entorno (`local_<area>`, `qa_<area>`, `prod_<area>`) creada al arrancar si no existe. Cada app aísla sus tablas con prefijo `<nombre>_` y su propio historial `MigrationsHistoryTable("__EFMigrationsHistory_<nombre>")` vía Migraciones EF Core (`Database.Migrate()`), prohibiendo `EnsureCreated()`.
 14. **Lógica de Negocio 100% en Backend:** Toda regla, cálculo o validación crítica reside exclusivamente en `.NET 10` (`Domain` / `Application`) para permitir futura unificación bajo arquitectura de microservicios.
-15. **Estándar UI Minimalista Pastel y Font Awesome Free:** Prohibido usar emoticones/emojis Unicode en la interfaz; todas las apps comparten paleta pastel minimalista e iconografía de **Font Awesome Free**.
+15. **Estándar UI Minimalista Pastel y Font Awesome Free:** Prohibido usar emoticones/emojis Unicode en la interfaz; todas las apps comparten combinación armónica de colores pastel, escala fija de títulos/header (`h1: 22px`, `h2: 16px`, `max-width: 1120px`) e iconografía de **Font Awesome Free**.
 16. **Código en Inglés Técnico y CORS Restringido:** Los símbolos de código se escriben en inglés técnico y está prohibido `AllowAnyOrigin()` en Producción.
+
+---
+
+## 🔄 Secuencia Oficial del Flujo (Vicoder — Agente — TI)
+
+1. **Petición en lenguaje natural:** El Vicoder describe su necesidad en Codex / Antigravity y aprueba el plan propuesto.
+2. **Construcción y prueba local:** El agente implementa la aplicación en una rama (`feat/*`), ejecuta pruebas automatizadas y se la muestra al usuario en local.
+3. **Pull Request (PR):** El agente sube la rama y entrega el enlace del PR para revisión.
+4. **Revisión y Pase a QA:** El Ingeniero TI aprueba y fusiona el PR hacia `main`, lo que dispara el **Filtro de TI (`Gitleaks` + tests)** y despliega automáticamente el enlace de **QA** en Cloud Run.
+5. **Validación en QA:** El Vicoder prueba la aplicación en el enlace de QA y confirma que cumple con lo requerido.
+6. **Pase a Producción:** El Ingeniero TI ejecuta el despliegue a **Producción** (`Run workflow` / aprobación en GitHub Actions) y entrega el enlace oficial productivo.
+
+> [!WARNING]
+> **Nota sobre GitHub Free en repositorios privados:** Mientras la organización permanezca en el plan gratuito (`GitHub Free`) con repositorios privados sin *Branch Protection*, GitHub no bloquea técnicamente la autoaprobación de Pull Requests y el propio agente/usuario podría ejecutar el merge si se le solicita. Al migrar al plan **GitHub Team**, se activa la protección obligatoria en `main` para impedir que el autor apruebe o fusione su propio PR.

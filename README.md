@@ -18,6 +18,7 @@ Repositorio plantilla corporativo gobernado por TI para la creación de aplicaci
 | [`.agents/skills/git-pr-workflow/SKILL.md`](./.agents/skills/git-pr-workflow/SKILL.md) | Skill para gestionar ramas, auditoría de secretos/archivos basura, Conventional Commits y creación de Pull Requests con `gh`. |
 | [`plan.md`](./plan.md) | Definición operativa de las 4 fases del **Golden Path** (Local, Filtro TI, QA en GCP y Pase a Producción). |
 | [`.github/copilot-instructions.md`](./.github/copilot-instructions.md) | Criterios de auditoría automática para **GitHub Copilot Code Review** en cada Pull Request. |
+| [`.github/pull_request_template.md`](./.github/pull_request_template.md) | Checklist obligatorio cargado automáticamente en cada Pull Request para validar arquitectura, UI, MySQL y seguridad. |
 | [`.github/workflows/ci-cd.yml`](./.github/workflows/ci-cd.yml) | Pipeline automatizado: Filtro de TI (Tests + Clean Architecture + Cero Secretos), Despliegue a Cloud Run (QA) y Pase a Producción con aprobación de 1 clic. |
 
 ---

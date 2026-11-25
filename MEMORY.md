@@ -51,4 +51,5 @@
 - [x] **Tarea 17:** Endurecer `ci-cd.yml` según revisión de Infra: Gitleaks, `id-token: write` por job, `concurrency`, eliminación de filtro `paths`, guard `main` en `workflow_dispatch` y promoción inmutable de imágenes QA $\rightarrow$ PROD con `API_URL` en runtime (`env-config.js`).
 - [x] **Tarea 18:** Agregar regla obligatoria de **Comunicación Coloquial (Cero Tecnicismos)** al usuario final en `AGENTS.md`, `golden-path-rules.md` y la skill global `init-vicoder-project`.
 - [x] **Tarea 19:** Documentar en `README.md` la **Secuencia Oficial del Flujo** (con advertencia sobre autoaprobación de PR en GitHub Free) y estandarizar en `scaffold-clean-fullstack`, `AGENTS.md` y `golden-path-rules.md` la combinación armónica de colores pastel + formato/tamaños fijos de barra de títulos y secciones.
+- [x] **Tarea 20:** Agregar `.github/pull_request_template.md` con el checklist maestro del Golden Path para auditoría automática en cada Pull Request.
 
